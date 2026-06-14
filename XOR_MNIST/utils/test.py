@@ -177,9 +177,10 @@ def test(model: MnistDPL, dataset: BaseDataset, args, **kwargs):
 
         fprint("Preparing the ensembles...")
 
+        _seed = args.seed if args.seed is not None else 42
         ensemble = deep_ensemble(
             seeds=[
-                i + args.seed + 1 for i in range(args.n_ensembles)
+                i + _seed + 1 for i in range(args.n_ensembles)
             ],
             dataset=dataset,
             num_epochs=args.n_epochs,
