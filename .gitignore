@@ -62,3 +62,10 @@ test_slurm.sh
 
 # Locks
 access.lock
+
+# Local notes
+/IMPLEMENTATION_PLAN.md
+/INITIAL_PP.md
+/INTERNAL_REVIEW_2.md
+/PPT_PLAN.md
+/PROJECT_OVERVIEW.md
