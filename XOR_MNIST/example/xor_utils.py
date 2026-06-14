@@ -1,4 +1,5 @@
 import itertools
+import os
 import random
 import sys
 from datetime import datetime
@@ -219,7 +220,8 @@ def show_cf(model, G, Y, args, _plot=False):
 
         cs = [c1, c2, c3]
         for i in range(3):
-            CF = confusion_matrix(G[:, i].numpy(), cs[i])
+            g_col = G[:, i]
+            CF = confusion_matrix(g_col.numpy() if hasattr(g_col, 'numpy') else g_col, cs[i])
 
             fig.add_subplot(1, 4, 2 + i)
             plt.imshow(CF, cmap="plasma")
@@ -238,6 +240,7 @@ def show_cf(model, G, Y, args, _plot=False):
             flags = flags + f"-csup_{args.csup}"
         if args.entropy:
             flags = flags + "-entropy"
+        os.makedirs("example/cfs", exist_ok=True)
         fig.savefig(f"example/cfs/XOR-CF-{args.model}{flags}.png")
 
     return y_score, c_score

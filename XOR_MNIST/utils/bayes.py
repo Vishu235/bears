@@ -8,7 +8,6 @@ import torch.nn as nn
 import wandb
 from datasets import get_dataset
 from datasets.utils.base_dataset import BaseDataset
-from laplace import Laplace
 from models import get_model
 from models.utils.utils_problog import build_worlds_queries_matrix
 from numpy import ndarray
@@ -1824,6 +1823,7 @@ def laplace_approximation(
     Returns:
         la: laplace model
     """
+    from laplace import Laplace
     from laplace.curvature import AsdlGGN
     from torch.utils.data import DataLoader
 
