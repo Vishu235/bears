@@ -319,6 +319,13 @@ def parse_args():
     )
     parser.add_argument("--feature-batch-size", type=int, default=64)
     parser.add_argument("--bdd-model-name", default="dpl_auc")
+    parser.add_argument(
+        "--w-entropy",
+        dest="w_entropy",
+        type=float,
+        default=1.0,
+        help="BDD entropy loss weight for full BDD training.",
+    )
     return parser.parse_args()
 
 
