@@ -21,6 +21,14 @@ from utils.status import progress_bar
 from warmup_scheduler import GradualWarmupScheduler
 
 
+def _paired_ground_truth_to_int(split_concepts):
+    paired = np.char.add(
+        split_concepts[0].astype(str), split_concepts[1].astype(str)
+    ).squeeze(-1)
+    paired = np.where(paired == "-1-1", "-1", paired)
+    return paired.astype(int)
+
+
 class DatasetPcX(Dataset):
     """Dataset of P(C|X), it is a dictionary dataset"""
 
@@ -345,9 +353,7 @@ def montecarlo_dropout(
     # [#data, 1]
     # gs = np.concatenate(gs, axis=0).squeeze(1)
     # Print some information for debugging
-    gs = np.char.add(gs[0].astype(str), gs[1].astype(str))
-    gs = np.where(gs == "-1-1", -1, gs)
-    gs = gs.squeeze(-1).astype(int)
+    gs = _paired_ground_truth_to_int(gs)
 
     p_cs_1 = np.expand_dims(
         p_cs[0].squeeze(2), axis=-1
@@ -1752,9 +1758,7 @@ def ensemble_predict(
     # [#data, 1]
     # gs = np.concatenate(gs, axis=0).squeeze(1)
     # Print some information for debugging
-    gs = np.char.add(gs[0].astype(str), gs[1].astype(str))
-    gs = np.where(gs == "-1-1", -1, gs)
-    gs = gs.squeeze(-1).astype(int)
+    gs = _paired_ground_truth_to_int(gs)
 
     p_cs_1 = np.expand_dims(
         p_cs[0].squeeze(2), axis=-1
@@ -2196,9 +2200,7 @@ def laplace_prediction(
     # [#data, 1]
     # gs = np.concatenate(gs, axis=0).squeeze(1)
     # Print some information for debugging
-    gs = np.char.add(gs[0].astype(str), gs[1].astype(str))
-    gs = np.where(gs == "-1-1", -1, gs)
-    gs = gs.squeeze(-1).astype(int)
+    gs = _paired_ground_truth_to_int(gs)
 
     p_cs_1 = np.expand_dims(
         p_cs[0].squeeze(2), axis=-1
