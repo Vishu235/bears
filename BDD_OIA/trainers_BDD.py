@@ -249,7 +249,7 @@ class ClassificationTrainer:
             #         w_i  = 1 / self.c_freq[i] if concepts[j, i] == 1 else 1 / (1 - self.c_freq[i])
             #         labeled_loss = labeled_loss + lamb * w_i* F.binary_cross_entropy(hh_labeled_list[j,i], concepts[j, i].to(self.device))
 
-            labeled_loss = torch.zeros([])
+            labeled_loss = torch.zeros([], device=self.device)
             if (-1) in self.args.which_c:
                 labeled_loss = labeled_loss + F.binary_cross_entropy(
                     hh_labeled_list[0], concepts[0].to(self.device)

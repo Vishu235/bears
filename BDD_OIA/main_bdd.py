@@ -1107,6 +1107,8 @@ def main(args):
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "cpu"
     )
+    args.cuda = device.type == "cuda"
+    print("Chosen device:", device)
     # else:
     #     device = torch.device("cpu")
 
