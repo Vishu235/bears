@@ -29,6 +29,9 @@ class MiniKandinsky(BaseDataset):
         )
         # dataset_ood   = KAND_Dataset(base_path='data/kandinsky/data',split='ood')
 
+        self.dataset_val = dataset_val
+        self.dataset_test = dataset_test
+
         print(f"Loaded datasets in {time.time()-start} s.")
 
         print(

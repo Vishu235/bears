@@ -194,11 +194,12 @@ def KAND_Classification(out_dict: dict, args):
         losses: losses dictionary
     """
     out = out_dict["YS"]
-    preds = out_dict["PREDS"]
+    preds = out_dict.get("PREDS")
     final_labels = out_dict["LABELS"][:, -1].to(torch.long)
     inter_labels = out_dict["LABELS"][:, :-1].to(torch.long)
 
     if args.task in ["patterns", "mini_patterns"]:
+        weight_device = preds.device if preds is not None else out.device
         weight = torch.tensor(
             [
                 1 / 0.04938272,
@@ -211,9 +212,9 @@ def KAND_Classification(out_dict: dict, args):
                 1 / 0.07407407,
                 1 / 0.01234568,
             ],
-            device=preds.device,
+            device=weight_device,
         )
-        final_weight = torch.tensor([0.5, 0.5], device=preds.device)
+        final_weight = torch.tensor([0.5, 0.5], device=weight_device)
     elif args.task == "red_triangle":
         weight = torch.tensor(
             [0.35538, 1 - 0.35538], device=preds.device

@@ -1,14 +1,56 @@
 import glob
+import io
 import itertools
 import os
+import zlib
 
 import joblib
+import joblib.numpy_pickle
 import numpy as np
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.datasets.folder import pil_loader
+
+
+def _read_array_with_alignment(self, unpickler):
+    """Read arrays from joblib files that include alignment padding."""
+    if getattr(self, "numpy_array_alignment_bytes", None):
+        padding_length = unpickler.file_handle.read(1)
+        if padding_length:
+            unpickler.file_handle.read(padding_length[0])
+
+    return _ORIGINAL_READ_ARRAY(self, unpickler)
+
+
+_ORIGINAL_READ_ARRAY = joblib.numpy_pickle.NumpyArrayWrapper.read_array
+
+
+def _load_joblib_compat(path):
+    try:
+        return joblib.load(path)
+    except Exception:
+        with open(path, "rb") as metadata_file:
+            raw_data = metadata_file.read()
+
+        try:
+            decompressed = zlib.decompress(raw_data)
+        except zlib.error:
+            raise
+
+        previous_read_array = (
+            joblib.numpy_pickle.NumpyArrayWrapper.read_array
+        )
+        joblib.numpy_pickle.NumpyArrayWrapper.read_array = (
+            _read_array_with_alignment
+        )
+        try:
+            return joblib.load(io.BytesIO(decompressed))
+        finally:
+            joblib.numpy_pickle.NumpyArrayWrapper.read_array = (
+                previous_read_array
+            )
 
 
 class KAND_Dataset(torch.utils.data.Dataset):
@@ -41,7 +83,7 @@ class KAND_Dataset(torch.utils.data.Dataset):
                 "meta",
                 str(self.img_number[item]).zfill(5) + ".joblib",
             )
-            meta = joblib.load(target_id)
+            meta = _load_joblib_compat(target_id)
 
             label = meta["y"]
             concepts, labels = [], []
@@ -236,7 +278,21 @@ class miniKAND_Dataset(torch.utils.data.Dataset):
         )
         self.list_images = list(sorted(self.list_images))
 
-        self.img_number = [i for i in range(len(self.list_images))]
+        self.list_images = [
+            image_path
+            for image_path in self.list_images
+            if os.path.exists(
+                os.path.join(
+                    self.base_path,
+                    self.split + "_meta",
+                    os.path.basename(image_path) + ".joblib",
+                )
+            )
+        ]
+        self.img_number = [
+            os.path.basename(image_path)
+            for image_path in self.list_images
+        ]
 
         self.transform = transforms.Compose([transforms.ToTensor()])
         self.concept_mask = np.array([False] * len(self.list_images))
@@ -246,9 +302,9 @@ class miniKAND_Dataset(torch.utils.data.Dataset):
             target_id = os.path.join(
                 self.base_path,
                 self.split + "_meta",
-                str(self.img_number[item]).zfill(5) + ".joblib",
+                self.img_number[item] + ".joblib",
             )
-            meta = joblib.load(target_id)
+            meta = _load_joblib_compat(target_id)
 
             label = meta["y"]
             concepts, labels = [], []

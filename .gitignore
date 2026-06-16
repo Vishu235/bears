@@ -18,10 +18,12 @@ build/
 wandb/
 .wandb/
 /logs
+/colab_outputs
 *.log
 
 # Local/generated datasets and checkpoints.
 # Keep the official small assets under XOR_MNIST/data tracked.
+/lastframe.zip
 BDD_OIA/data/
 BDD_OIA/models/
 BDD_OIA/out/
@@ -69,3 +71,4 @@ access.lock
 /INTERNAL_REVIEW_2.md
 /PPT_PLAN.md
 /PROJECT_OVERVIEW.md
+/Phase_I_Project_Report_PES_Format_Vishal_Gopinath.docx

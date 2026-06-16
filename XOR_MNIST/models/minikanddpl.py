@@ -70,11 +70,16 @@ class MiniKandDPL(DeepProblogModel):
         # Worlds-queries matrix
         # if args.task == 'base':
         self.n_facts = 6
-        self.w_q, self.and_rule, self.or_rule = (
-            build_worlds_queries_matrix_KAND(
-                self.n_images, self.n_facts, 3, task=args.task
-            )
+        rules = build_worlds_queries_matrix_KAND(
+            self.n_images, self.n_facts, 3, task=args.task
         )
+        if len(rules) == 3:
+            self.w_q, self.and_rule, self.or_rule = rules
+        else:
+            self.w_q, self.and_rule = rules
+            self.or_rule = torch.zeros((2**2, 2))
+            self.or_rule[0, 0] = 1
+            self.or_rule[1:, 1] = 1
         self.n_predicates = 3
         self.nr_classes = 2
 

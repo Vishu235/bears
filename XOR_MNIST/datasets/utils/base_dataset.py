@@ -53,6 +53,19 @@ class BaseDataset:
         """
         pass
 
+    def print_stats(self):
+        """Print split sizes when loaders populated dataset attributes."""
+        if not all(
+            hasattr(self, attr)
+            for attr in ["dataset_train", "dataset_val", "dataset_test"]
+        ):
+            return
+
+        print("## Statistics ##")
+        print("Train samples", len(self.dataset_train))
+        print("Validation samples", len(self.dataset_val))
+        print("Test samples", len(self.dataset_test))
+
 
 def get_loader(dataset, batch_size, num_workers=4, val_test=False):
 

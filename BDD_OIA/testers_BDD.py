@@ -16,6 +16,8 @@ import shutil
 import sys
 import time
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -28,7 +30,6 @@ from aggregators_BDD import CBM_aggregator, additive_scalar_aggregator
 from conceptizers_BDD import image_fcc_conceptizer
 from DPL.dpl import DPL
 from DPL.dpl_auc import DPL_AUC
-from laplace import Laplace
 from numpy import ndarray
 from parametrizers import dfc_parametrizer, image_parametrizer
 from scipy.special import softmax
@@ -714,6 +715,19 @@ class ClassificationTester:
             return res
 
         """Computes the precision@k for the specified values of k"""
+        if target.dim() > 1 and output.size(1) == target.size(1) * 2:
+            binary_predictions = torch.cat(
+                [
+                    chunk.argmax(dim=1, keepdim=True)
+                    for chunk in torch.split(output, 2, dim=1)
+                ],
+                dim=1,
+            )
+            acc = (
+                binary_predictions.eq(target.long()).float().mean() * 100
+            )
+            return [acc], [100]
+
         maxk = max(topk)
         batch_size = target.size(0)
         _, pred = output.topk(maxk, 1, True, True)
@@ -1822,6 +1836,7 @@ class LaplaceBayes(ClassificationTester):
 
     def laplace_approximation(self, train_loader, val_loader):
         # usual laplace approximation hook
+        from laplace import Laplace
         from laplace.curvature import AsdlGGN
         from torch.utils.data import DataLoader
 

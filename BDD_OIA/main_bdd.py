@@ -9,6 +9,7 @@ import pickle
 import sys
 
 import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -962,6 +963,12 @@ def parse_args():
         default="dpl",
         help="Choose model to fit",
     )
+    parser.add_argument(
+        "--bdd_data_dir",
+        type=str,
+        default="./data/bdd2048",
+        help="Directory containing BDD_OIA pkl files and split tensor folders.",
+    )
 
     parser.add_argument(
         "--exp_decay_lr",
@@ -1104,13 +1111,14 @@ def main(args):
     #     device = torch.device("cpu")
 
     # load dataset
-    train_data_path = "./data/bdd2048/train_BDD_OIA.pkl"
-    val_data_path = "./data/bdd2048/val_BDD_OIA.pkl"
-    test_data_path = "./data/bdd2048/test_BDD_OIA.pkl"
+    bdd_data_dir = args.bdd_data_dir.rstrip("/\\")
+    train_data_path = os.path.join(bdd_data_dir, "train_BDD_OIA.pkl")
+    val_data_path = os.path.join(bdd_data_dir, "val_BDD_OIA.pkl")
+    test_data_path = os.path.join(bdd_data_dir, "test_BDD_OIA.pkl")
 
     # load_data. Detail is BDD/dataset.py, lines 149-. This function is made by CBM's authors
 
-    image_dir = "data/bdd2048/"
+    image_dir = bdd_data_dir + os.sep
     train_loader = load_data(
         [train_data_path],
         True,
@@ -1266,9 +1274,12 @@ def main(args):
     # send models to device you want to use
     model = model.to(device)
     print("Res path", results_path)
-    load_checkpoint(
-        model, f"models/bdd/{args.model_name}-{args.seed}", args.seed
-    )
+    if args.do_test or args.load_model:
+        load_checkpoint(
+            model, f"models/bdd/{args.model_name}-{args.seed}", args.seed
+        )
+    else:
+        print("Training from scratch; no checkpoint loaded.")
     print("Model", model)
 
     # Test or train

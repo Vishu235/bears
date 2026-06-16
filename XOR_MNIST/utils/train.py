@@ -854,12 +854,15 @@ def train(
                 )
 
         y_pred = torch.argmax(ys, dim=-1)
+        train_labels = y_true[:, -1] if len(y_true.shape) > 1 else y_true
 
         print(
             "\n Train acc: ",
-            (y_pred == y_true).sum().item() / len(y_true) * 100,
+            (y_pred == train_labels).sum().item()
+            / len(train_labels)
+            * 100,
             "%",
-            len(y_true),
+            len(train_labels),
         )
 
         model.eval()
@@ -910,6 +913,12 @@ def train(
             p_cs_all,
             p_ys_all,
         ) = evaluate_metrics(model, test_loader, args, last=True)
+
+    if len(np.shape(y_true)) > 1:
+        y_true = y_true[:, -1]
+    if len(np.shape(c_true)) > 1:
+        c_true = np.reshape(c_true, -1)
+        c_pred = np.reshape(c_pred, -1)
 
     yac, yf1 = evaluate_mix(y_true, y_pred)
     cac, cf1 = evaluate_mix(c_true, c_pred)

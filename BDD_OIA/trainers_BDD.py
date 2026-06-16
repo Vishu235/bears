@@ -12,6 +12,8 @@ import shutil
 import sys
 import time
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -503,6 +505,8 @@ class ClassificationTrainer:
         # switch to evaluate mode
         self.model.eval()
 
+        end = time.time()
+
         loss_y, loss_c, loss_h = 0, 0, 0
 
         for i, (inputs, targets, concepts) in enumerate(val_loader):
@@ -540,9 +544,15 @@ class ClassificationTrainer:
                 )
             )
 
-            loss_h += self.entropy_loss(
-                hh_labeled, all_losses, epoch
-            ).cpu().data.numpy() / len(val_loader)
+            if self.w_entropy > 0:
+                loss_h += (
+                    self.entropy_loss(hh_labeled, all_losses, epoch)
+                    .cpu()
+                    .data.numpy()
+                    / len(val_loader)
+                )
+            else:
+                all_losses["entropy"] = 0.0
 
             loss_c += h_loss.data.cpu().numpy() / len(val_loader)
 
@@ -657,6 +667,8 @@ class ClassificationTrainer:
 
         # switch to evaluate mode
         self.model.eval()
+
+        end = time.time()
 
         # open the save file
         fp = open(save_file_name, "a")
@@ -848,6 +860,19 @@ class ClassificationTrainer:
 
     def accuracy(self, output, target, topk=(1,)):
         """Computes the precision@k for the specified values of k"""
+        if target.dim() > 1 and output.size(1) == target.size(1) * 2:
+            binary_predictions = torch.cat(
+                [
+                    chunk.argmax(dim=1, keepdim=True)
+                    for chunk in torch.split(output, 2, dim=1)
+                ],
+                dim=1,
+            )
+            acc = (
+                binary_predictions.eq(target.long()).float().mean() * 100
+            )
+            return [acc], [100]
+
         maxk = max(topk)
         batch_size = target.size(0)
         _, pred = output.topk(maxk, 1, True, True)
@@ -1114,7 +1139,11 @@ class GradPenaltyTrainer(ClassificationTrainer):
         )
 
         # add entropy on concepts
-        ent_loss = self.entropy_loss(hh_labeled, all_losses, epoch)
+        if self.w_entropy > 0:
+            ent_loss = self.entropy_loss(hh_labeled, all_losses, epoch)
+        else:
+            ent_loss = torch.tensor(0.0, device=inputs.device)
+            all_losses["entropy"] = 0.0
 
         # total loss to train models
         loss = pred_loss + h_loss + ent_loss
