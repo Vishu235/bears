@@ -1189,7 +1189,7 @@ def deep_ensemble(
                         else:
                             crit_kl = nn.KLDivLoss(
                                 reduction="batchmean"
-                            )()
+                            )
                             distance = -lambda_h * torch.mean(
                                 torch.stack(
                                     list(
