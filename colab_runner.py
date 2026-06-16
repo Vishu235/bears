@@ -24,14 +24,44 @@ def _quote_command(command):
     return " ".join(shlex.quote(str(part)) for part in command)
 
 
+def _log_path_for_command(command, cwd):
+    repo_root = Path(os.environ.get("BEARS_REPO_ROOT", cwd))
+    log_dir = repo_root / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    command_name = Path(str(command[1] if len(command) > 1 else command[0])).stem
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    return log_dir / f"{timestamp}_{cwd.name}_{command_name}.log"
+
+
 def _run(command, cwd):
     cwd = Path(cwd)
-    print(f"\n[{cwd}]$ {_quote_command(command)}", flush=True)
-    completed = subprocess.run(command, cwd=str(cwd))
-    if completed.returncode != 0:
+    log_path = _log_path_for_command(command, cwd)
+    command_text = _quote_command(command)
+    print(f"\n[{cwd}]$ {command_text}", flush=True)
+    print(f"Logging to {log_path}", flush=True)
+
+    with open(log_path, "w", encoding="utf-8", errors="replace") as log_file:
+        log_file.write(f"[{cwd}]$ {command_text}\n\n")
+        process = subprocess.Popen(
+            command,
+            cwd=str(cwd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            errors="replace",
+        )
+        assert process.stdout is not None
+        for line in process.stdout:
+            print(line, end="", flush=True)
+            log_file.write(line)
+        returncode = process.wait()
+
+    if returncode != 0:
         raise SystemExit(
-            f"Command failed with exit code {completed.returncode}: "
-            f"{_quote_command(command)}"
+            f"Command failed with exit code {returncode}: {command_text}\n"
+            f"See log: {log_path}"
         )
 
 
@@ -332,6 +362,7 @@ def parse_args():
 def main():
     args = parse_args()
     args.repo_root = _resolve_path(args.repo_root, Path.cwd())
+    os.environ["BEARS_REPO_ROOT"] = str(args.repo_root)
     os.environ.setdefault("WANDB_MODE", "disabled")
     os.environ.setdefault("MPLBACKEND", "Agg")
 
