@@ -7,10 +7,18 @@ from random import choice, sample
 
 import numpy as np
 import torch
-from torch import Tensor, load
+from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 from tqdm import tqdm
+
+
+def _torch_load_compat(path):
+    """Load dataset artifacts saved with NumPy arrays across PyTorch versions."""
+    try:
+        return torch.load(path, weights_only=False)
+    except TypeError:
+        return torch.load(path)
 
 
 def get_label(c1, c2, labels, args):
@@ -119,7 +127,7 @@ class nMNIST(Dataset):
         """
         try:
             # print("Loading data...")
-            data = load(path)
+            data = _torch_load_compat(path)
             # print("Loaded.")
         except:
             print("No dataset found.")
@@ -197,7 +205,7 @@ def check_dataset(n_digits, data_folder, data_file, dataset_dim):
     Path(data_folder).mkdir(parents=True, exist_ok=True)
     data_path = os.path.join(data_folder, data_file)
     try:
-        load(data_path)
+        _torch_load_compat(data_path)
     except:
         print("No dataset found.")
         # Define dataset dimension so to have teh same number of worlds
