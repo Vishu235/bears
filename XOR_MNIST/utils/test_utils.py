@@ -589,7 +589,7 @@ def generate_concept_labels(concept_labels: List[str]):
 
 
 def convert_numpy_to_list(obj):
-    """Converts numpy elements to list
+    """Convert NumPy/Torch values into JSON-serializable Python values.
 
     Args:
         obj: dictionary objectt
@@ -599,9 +599,20 @@ def convert_numpy_to_list(obj):
     """
     if isinstance(obj, np.ndarray):
         return obj.tolist()
+    elif isinstance(obj, np.generic):
+        return obj.item()
     elif isinstance(obj, torch.Tensor):
+        if obj.dim() == 0:
+            return obj.item()
         return obj.cpu().numpy().tolist()
+    elif isinstance(obj, dict):
+        return {
+            key: convert_numpy_to_list(value)
+            for key, value in obj.items()
+        }
     elif isinstance(obj, list):
+        return [convert_numpy_to_list(item) for item in obj]
+    elif isinstance(obj, tuple):
         return [convert_numpy_to_list(item) for item in obj]
     else:
         return obj
