@@ -13,6 +13,12 @@ import uuid
 import setproctitle
 import torch
 from datasets import get_dataset
+from exp_best_args import (
+    set_best_args_XOR,
+    set_best_args_addmnist,
+    set_best_args_halfmnist,
+    set_best_args_shortmnist,
+)
 from models import get_model
 from utils.args import *
 from utils.checkpoint import create_load_ckpt, save_model
@@ -102,6 +108,11 @@ def parse_args():
     get_parser = getattr(mod, "get_parser")
     parser = get_parser()
     parser.add_argument(
+        "--load_best_args",
+        action="store_true",
+        help="Loads the best arguments for each method and dataset.",
+    )
+    parser.add_argument(
         "--project",
         type=str,
         default="Reasoning-Shortcuts",
@@ -117,7 +128,22 @@ def parse_args():
         else set_random_seed(42)
     )
 
+    if args.load_best_args:
+        args = apply_best_args(args)
+
     return args
+
+
+def apply_best_args(args):
+    if args.dataset == "halfmnist":
+        return set_best_args_halfmnist(args)
+    if args.dataset == "addmnist":
+        return set_best_args_addmnist(args)
+    if args.dataset == "shortmnist":
+        return set_best_args_shortmnist(args)
+    if args.dataset == "xor":
+        return set_best_args_XOR(args)
+    raise ValueError(f"No best-argument preset is defined for {args.dataset}.")
 
 
 def main(args):

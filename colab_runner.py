@@ -162,6 +162,26 @@ def halfmnist_eval(args):
         str(ckpt),
         "--non_verbose",
     ]
+    if args.halfmnist_preset == "repo-best":
+        command.extend(["--load_best_args", "--seed", str(args.seed)])
+    elif args.halfmnist_preset == "paper":
+        command.extend(
+            [
+                "--seed",
+                "0",
+                "--n_epochs",
+                "30",
+                "--batch_size",
+                "64",
+                "--lr",
+                "0.0005",
+                "--exp_decay",
+                "0.95",
+                "--lambda_h",
+                "0.8",
+                "--real-kl",
+            ]
+        )
     if args.use_ood:
         command.append("--use_ood")
     _run(command, args.repo_root / "XOR_MNIST")
@@ -287,6 +307,7 @@ def archive_results(args):
         args.repo_root / "BDD_OIA" / "dumps",
         args.repo_root / "BDD_OIA" / "plots",
         args.repo_root / "BDD_OIA" / "out",
+        args.repo_root / "summary_tables",
         args.repo_root / "logs",
     ]
 
@@ -349,6 +370,16 @@ def parse_args():
     )
     parser.add_argument("--feature-batch-size", type=int, default=64)
     parser.add_argument("--bdd-model-name", default="dpl_auc")
+    parser.add_argument(
+        "--halfmnist-preset",
+        default="default",
+        choices=["default", "repo-best", "paper"],
+        help=(
+            "Extra HalfMNIST evaluation hyperparameters. Use 'paper' for "
+            "DPL+BEARS reproduction settings from the paper/repo analysis "
+            "notebook, and 'repo-best' for exp_best_args.py presets."
+        ),
+    )
     parser.add_argument(
         "--w-entropy",
         dest="w_entropy",
