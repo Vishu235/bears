@@ -9,6 +9,7 @@ command-line entry points. Run it from the repository root, for example:
 
 import argparse
 import os
+import shutil
 import shlex
 import subprocess
 import sys
@@ -89,7 +90,10 @@ def diagnostics(args):
     except Exception as exc:
         print(f"Could not import torch/torchvision: {exc}")
 
-    subprocess.run(["nvidia-smi"], check=False)
+    if shutil.which("nvidia-smi"):
+        subprocess.run(["nvidia-smi"], check=False)
+    else:
+        print("nvidia-smi not found; this runtime is probably CPU-only.")
 
 
 def ensure_kandinsky_data(repo_root):
