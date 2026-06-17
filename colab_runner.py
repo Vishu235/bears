@@ -258,6 +258,7 @@ def bdd_train(args, full=False):
     epochs = args.epochs if full else min(args.epochs, 1)
     batch_size = args.bdd_batch_size if full else min(args.bdd_batch_size, 4)
     w_entropy = args.w_entropy if full else 0
+    h_labeled_param = args.h_labeled_param if full else 0
 
     _run(
         [
@@ -291,7 +292,7 @@ def bdd_train(args, full=False):
             "--model_name",
             args.bdd_model_name,
             "--h_labeled_param",
-            "0",
+            str(h_labeled_param),
             "--w_entropy",
             str(w_entropy),
             "--seed",
@@ -311,6 +312,7 @@ def archive_results(args):
         args.repo_root / "BDD_OIA" / "dumps",
         args.repo_root / "BDD_OIA" / "plots",
         args.repo_root / "BDD_OIA" / "out",
+        args.repo_root / "BDD_OIA" / "models" / "bdd",
         args.repo_root / "summary_tables",
         args.repo_root / "logs",
     ]
@@ -374,6 +376,13 @@ def parse_args():
     )
     parser.add_argument("--feature-batch-size", type=int, default=64)
     parser.add_argument("--bdd-model-name", default="dpl_auc")
+    parser.add_argument(
+        "--h-labeled-param",
+        dest="h_labeled_param",
+        type=float,
+        default=0.0,
+        help="BDD concept-supervision loss weight for full BDD training.",
+    )
     parser.add_argument(
         "--halfmnist-preset",
         default="default",
